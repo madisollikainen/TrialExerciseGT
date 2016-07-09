@@ -1,9 +1,9 @@
 /*	Author: Madis Ollikainen
- *	File:	merkelHasher.hpp
+ *	File:	merkleHasher.hpp
  *
- *	Header file for the MerkelHasher class, which 
+ *	Header file for the MerkleHasher class, which 
  *	implements methods for reading an text file and 
- *	generating a hash tree (Merkel tree) out of the 
+ *	generating a hash tree (Merkle tree) out of the 
  *	hashes of the lines in the file. 
  *
  *	The class will be templated on:
@@ -11,7 +11,7 @@
  *		b) The 'hash merging' function
  *
  *	 
- *	The Merkel tree structure will be formed similarly 
+ *	The Merkle tree structure will be formed similarly 
  *	as suggested in [1]. Following [1] a 'canonical' 
  *	hash tree is formed, which can be grown without
  *	previously knowing the number of leaves it will 
@@ -42,12 +42,12 @@
  *			repeated until all of the trees have been merge into one.
  *			
  *
- *	For singing/time-stamping a file, the root of the 'canonical' Merkel tree formed
+ *	For singing/time-stamping a file, the root of the 'canonical' Merkle tree formed
  *	from the file can be signed. And for verifying the existance of a single line 
  *	in the file, the hash chain stsrting from the hash of that line to the root of the 
- *	tree can be used. Thus the MerkelHasher class will implement the following functions:
+ *	tree can be used. Thus the MerkleHasher class will implement the following functions:
  *		
- *		a)	'getRoot', which takes a file and outputes the root of its Merkel Tree.
+ *		a)	'getRoot', which takes a file and outputes the root of its Merkle Tree.
  *	 		Additionally this function will store the leaf values into a inpputed vector.
  *
  *		b)	'getHashChain', which takes a file and a string corresponding to a line in the 
@@ -68,8 +68,8 @@
  *	 
  */
 
-#ifndef MERKEL_HASHER_HPP
-#define MERKEL_HASHER_HPP
+#ifndef MERKLE_HASHER_HPP
+#define MERKLE_HASHER_HPP
 
 
 #include <vector>
@@ -84,11 +84,11 @@ typedef std::vector< std::pair<int, std::string> > hash_chain_t;
 
 
 /*****************************************************
- *** The templated MerkelHasher class declaration. ***
+ *** The templated MerkleHasher class declaration. ***
  *****************************************************/
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-// class MerkelHasher
-struct MerkelHasher
+// class MerkleHasher
+struct MerkleHasher
 {
 
 // public:
@@ -97,28 +97,28 @@ struct MerkelHasher
 	std::string hash(const std::string s){	return H(s);	}
 	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
 
-	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 	std::string getRoot( const std::string file, std::vector<std::string>& leafs); 
 
-	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 	hash_chain_t getHashChain( const std::string file, std::string target_line); 
 
 
 // private:
 
 
-}; // END MERKELHASHER DECLARATION
+}; // END MERKLEHASHER DECLARATION
 
 
 
 /*****************************************************
- *** The MerkelHasher member function definitions. ***
+ *** The MerkleHasher member function definitions. ***
  *****************************************************/
 
 
-// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-std::string MerkelHasher<H,M>::getRoot( const std::string file, std::vector<std::string>& leafs)
+std::string MerkleHasher<H,M>::getRoot( const std::string file, std::vector<std::string>& leafs)
 {
 	// Initialise the output
 	std::string root;
@@ -206,9 +206,9 @@ std::string MerkelHasher<H,M>::getRoot( const std::string file, std::vector<std:
 } 
 
 
-// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-hash_chain_t MerkelHasher<H,M>::getHashChain( const std::string file, std::string target_line)
+hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::string target_line)
 {
 	// Initialise the output
 	hash_chain_t chain;
@@ -377,4 +377,4 @@ hash_chain_t MerkelHasher<H,M>::getHashChain( const std::string file, std::strin
 
 
 
-#endif // MERKEL_HASHER_HPP
+#endif // MERKLE_HASHER_HPP

@@ -2,7 +2,7 @@
 #include <string>
 
 #include "myHashInterface.hpp"
-#include "merkelHasher.hpp"
+#include "merkleHasher.hpp"
 
 std::string self_hash(const std::string str)
 {
@@ -13,8 +13,8 @@ int main( int argc, char **argv )
 {
 
 	std::string infile(argv[1]);
-	// MerkelHasher<sha256,myHashMerge> myHasher;
-	MerkelHasher<self_hash,myHashMerge> myHasher;
+	// MerkleHasher<sha256,myHashMerge> myHasher;
+	MerkleHasher<self_hash,myHashMerge> myHasher;
 
 	std::vector<std::string> leafs;
 
