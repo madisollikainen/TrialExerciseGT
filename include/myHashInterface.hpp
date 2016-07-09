@@ -1,6 +1,5 @@
-/*	Madis Ollikainen 
- *
- *	myHashInterface.hpp  
+/*	Author:	Madis Ollikainen 
+ *	File:	myHashInterface.hpp  
  *
  *	Implenets a very simple wrapper function for OpenSSL 
  *	SHA256 hashing function usage with std::strings.
@@ -21,7 +20,7 @@
 #include <openssl/sha.h>
 
 
-
+// --- The SHA256 hashing function wrapper --- //
 std::string sha256(const std::string str)
 {
     unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -36,6 +35,13 @@ std::string sha256(const std::string str)
     }
     return ss.str();
 } 
+
+
+// --- My Hash mergin function --> just add/concatinate the strings --- //
+std::string myHashMerge(const std::string s1, const std::string s2 )
+{
+    return (s1+s2);
+}
 
 
 
