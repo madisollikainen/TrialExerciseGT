@@ -12,9 +12,21 @@ std::string self_hash(const std::string str)
 int main( int argc, char **argv )
 {
 
+	std::string infile(argv[1]);
+	MerkelHasher<sha256,myHashMerge> myHasher;
+	// MerkelHasher<self_hash,myHashMerge> myHasher;
 
-	// MerkelHasher<sha256,myHashMerge> myHasher;
-	MerkelHasher<self_hash,myHashMerge> myHasher;
+	std::vector<std::string> leafs;
+
+	std::string root = myHasher.getRoot(infile, leafs);
+
+	std::cout << "Leafs: " << std::endls;
+	for (uint i = 0; i<leafs.size(); ++i ){ std::cout << leafs[i] << std::endl;}
+	std::cout << std::endl;
+	std::cout << std::endl;
+
+	std::cout << "Root: " << root << std::endl;
+	
 
 	// const std::string s1("LogTest1");
 	// const std::string s2("LogTest2");
@@ -30,11 +42,14 @@ int main( int argc, char **argv )
 	// std::cout << "hash( hash(" << s1 << ")+hash(" << s2 << ") ):\t" << h3 << std::endl;
 
 	// std::cout<<std::endl;
-	std::vector<std::string> vs{"1","2","3","4", "5", "6", "7"};
-	for( uint i =0; i<vs.size(); ++i ) 
-	{ 
-		myHasher.test(vs[i]); 
-	}
+	// std::vector<std::string> vs{"1","2","3","4", "5", "6", "7"};
+	// for( uint i =0; i<vs.size(); ++i ) 
+	// { 
+	// 	myHasher.test(vs[i]); 
+	// }
+
+
+	
 		
 
 	return 0 ;
