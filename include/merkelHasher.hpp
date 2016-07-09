@@ -35,13 +35,15 @@
  *** The templated MerkelHasher class declaration. ***
  *****************************************************/
 
+
+typedef std::vector< std::pair<int, std::string> > hash_chain_t;
+
  template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
  class MerkelHasher
  {
 
  public:
 
- 	typedef std::vector< std::pair<int, std::string> > hash_chain_t;
 
  	/*
  	 * Simple consturctor adding the initial empty
@@ -80,7 +82,7 @@
 
 
  	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
- 	// hash_chain_t getHashChain( const std::string file, std::string initial_target); 
+ 	hash_chain_t getHashChain( const std::string file, std::string target_line); 
 
 
 
@@ -284,6 +286,131 @@ std::string MerkelHasher<H,M>::getRoot( const std::string file, std::vector<std:
 	return root;
 
 
+} 
+
+
+// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
+hash_chain_t MerkelHasher<H,M>::getHashChain( const std::string file, std::string target_line)
+{
+	// Initialise the output
+	hash_chain_t chain;
+
+	// Initialise the root
+	std::string root;
+
+	// Initialise the target
+	std::string target = hash(target_line);
+
+	// Open the file 
+	std::ifstream input_file(file);
+
+	// Make a vector to hold the roots of the 
+	// forest consisting of complete trees.
+	std::vector<std::string> roots_;
+
+	// Loop over the lines in the file and 
+	// generate the complete-tree-forest
+	std::string line; 
+	while( std::getline(input_file, line) )
+	{
+		// Get the hash of the line (a new leaf)
+		std::string leaf = hash(line);
+		
+		// Loop over the complete-tree-forest roots
+		for (uint i=0; i<roots_.size(); ++i)
+		{
+			if( roots_[i] == "" )
+			{
+				// roots_[i] = leaf;
+				std::swap(roots_[i],leaf);
+				break;
+			}
+			else
+			{	// Before conducting the hashing,
+				// check if any of the two values
+				// entering the hash function, is
+				// equvalent to the target. If yes,
+				// then store them into the hash_chain
+				// in correct order.
+				if ( roots_[i] != target && leaf != target )
+				{
+					leaf = hash(roots_[i],leaf);
+					roots_[i] = "";
+				}
+				else if( roots_[i] == target )
+				{
+					chain.push_back( std::make_pair(0,roots_[i]) ); // First push the one which 
+					chain.push_back( std::make_pair(1,leaf) );		// corresponds to the target.
+					leaf = hash(roots_[i],leaf);
+					roots_[i] = "";
+					target = leaf;
+				}
+				else
+				{
+					chain.push_back( std::make_pair(1,leaf) );		// First push the one which 
+					chain.push_back( std::make_pair(0,roots_[i]) ); // corresponds to the target.
+					leaf = hash(roots_[i],leaf);
+					roots_[i] = "";
+					target = leaf;
+				}
+			}
+		}
+		if(leaf != "" )
+		{
+			roots_.push_back(leaf);
+			leaf = "";
+		}
+	} // end while
+
+	// Now merge the complete-tree-forest from 
+	// right-to-left. Start by finding the first
+	// non-empty string in the roots_ vector.
+	std::vector<std::string>::iterator it = std::find_if(roots_.begin(), roots_.end(), [](std::string s){ return s != ""; } );
+
+	// This will be initial value for the root
+	root = *it;
+
+	// Move the iterator
+	++it;
+
+	// Tansvers the roots_ vector and hash r with all non-empty strings
+	for ( ; it < roots_.end(); ++it)
+	{
+		if (*it != "")
+		{
+			if ( root != target && *it != target)
+			{
+				root = hash(*it,root);	
+			}
+			else if (*it == target)
+			{
+				chain.push_back( std::make_pair(0,*it) ); 	// First push the one which 
+				chain.push_back( std::make_pair(1,root) );	// corresponds to the target.
+				root = hash(*it,root);
+				target = root;
+			}
+			else
+			{
+				chain.push_back( std::make_pair(1,root) ); 	// First push the one which 
+				chain.push_back( std::make_pair(0,*it) );	// corresponds to the target.
+				root = hash(*it,root);
+				target = root;
+			}
+			
+		}
+	}
+
+	// Now check if the target == root. If it does,
+	// add it to the chain. If not, then the initial 
+	// target was not amongs the leafs.
+	if ( target == root )
+	{
+		chain.push_back( std::make_pair(-1,root) );	
+	}
+	
+	// Return the hash chain
+	return chain;
 } 
 
 

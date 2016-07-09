@@ -13,20 +13,27 @@ int main( int argc, char **argv )
 {
 
 	std::string infile(argv[1]);
-	MerkelHasher<sha256,myHashMerge> myHasher;
-	// MerkelHasher<self_hash,myHashMerge> myHasher;
+	// MerkelHasher<sha256,myHashMerge> myHasher;
+	MerkelHasher<self_hash,myHashMerge> myHasher;
 
 	std::vector<std::string> leafs;
 
 	std::string root = myHasher.getRoot(infile, leafs);
 
-	std::cout << "Leafs: " << std::endls;
+	std::cout << "Leafs: " << std::endl;
 	for (uint i = 0; i<leafs.size(); ++i ){ std::cout << leafs[i] << std::endl;}
 	std::cout << std::endl;
 	std::cout << std::endl;
 
 	std::cout << "Root: " << root << std::endl;
 	
+	hash_chain_t hc_3 = myHasher.getHashChain(infile, std::string(argv[2]) );
+	for (uint i=0; i < hc_3.size(); ++i)
+	{
+		std::cout << hc_3[i].first << "\t|\t" << hc_3[i].second << std::endl;
+
+	}
+
 
 	// const std::string s1("LogTest1");
 	// const std::string s2("LogTest2");
