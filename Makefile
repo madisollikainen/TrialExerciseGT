@@ -21,6 +21,9 @@ OpenSSL = -lssl -lcrypto
 
 all: test 
 
-test: ${SRC}/test.cpp ${HEADERS}/*.hpp
+test: ${SRC}/test.cpp ${HEADERS}/*.hpp ${BUILD}
 	${CC} ${CFLAGS} ${OPT} -o ${BUILD}/test ${SRC}/test.cpp ${OpenSSL} -I${HEADERS}
+
+${BUILD}:
+	mkdir -p ${BUILD}
 
