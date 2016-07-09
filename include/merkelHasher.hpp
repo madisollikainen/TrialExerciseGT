@@ -60,6 +60,18 @@
  	std::string hash(const std::string s){	return H(s);	}
  	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
 
+ 	// An add function for adding entries into the tree. 
+ 	// The entries will be hashed before becoming leafs.
+ 	void add(std::string s){ add_leaf_( hash(s) ); }
+
+ 	// Clear function for returning the MerkelHasher to the initial state
+ 	void clear(){ leafs_.clear(); roots_.clear();  }
+
+ 	// A function for merging the forest and getting the root
+ 	std::string root();
+
+
+ 	// A test function
  	void test(const std::string leaf)
  	{
  		add_leaf_(leaf);
@@ -73,6 +85,8 @@
  			else std::cout << roots_[i] << " ";  
  		}
  		std::cout<<std::endl;
+ 		std::cout<<std::endl;
+ 		std::cout << "Root of the Merkel tree: " << root() << std::endl;	
  	}
 
 
@@ -96,53 +110,87 @@
  *** The MerkelHasher member function definitions. ***
  *****************************************************/
 
- template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
- void MerkelHasher<H,M>::add_leaf_(std::string leaf)
- {
- 	// Add the new leaf to the leafs vector
- 	leafs_.push_back(leaf);
+// ------------------------------ //
+// --- The add_leaf_ function --- //
+// ------------------------------ //
+template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
+void MerkelHasher<H,M>::add_leaf_(std::string leaf)
+{
+	// Add the new leaf to the leafs vector
+	leafs_.push_back(leaf);
 
- 	// Traverse the roots_ vector and update it.
- 	// Traversal is done with simple rules:
- 	//
- 	//		a)	If the roots_[i] is an empty string,
- 	//			set it to be the current 'leaf' value
- 	//			roots_[i] = leaf. Finish the loop.
- 	//
- 	// 		b)	If roots_[i] is a non-empty string,
- 	//		 	then hash it together with the leaf
- 	//			leaf = hash(roots_[i],leaf) and set 
- 	//			change it to empty string roots_[i]="". 
- 	//			After that carry on with the loop.
- 	//		
- 	//		c)	If the end of the vector roots_ is reach
- 	//			without finding an empty roots_[i], then 
- 	//			push the hashed together leaf to the end 
- 	//			end of the roots_ vector.
- 	//			   
- 	//
- 	for (uint i=0; i<roots_.size(); ++i)
- 	{
- 		if( roots_[i] == "" )
- 		{
- 			// roots_[i] = leaf;
- 			std::swap(roots_[i],leaf);
- 			break;
- 		}
- 		else
- 		{
- 			leaf = hash(roots_[i],leaf);
- 			roots_[i] = "";
- 		}
- 	}
- 	if(leaf != "" )
- 	{
- 		roots_.push_back(leaf);
- 		leaf = "";
- 	}
+	// Traverse the roots_ vector and update it.
+	// Traversal is done with simple rules:
+	//
+	//		a)	If the roots_[i] is an empty string,
+	//			set it to be the current 'leaf' value
+	//			roots_[i] = leaf. Finish the loop.
+	//
+	// 		b)	If roots_[i] is a non-empty string,
+	//		 	then hash it together with the leaf
+	//			leaf = hash(roots_[i],leaf) and set 
+	//			change it to empty string roots_[i]="". 
+	//			After that carry on with the loop.
+	//		
+	//		c)	If the end of the vector roots_ is reach
+	//			without finding an empty roots_[i], then 
+	//			push the hashed together leaf to the end 
+	//			end of the roots_ vector.
+	//			   
+	//
+	for (uint i=0; i<roots_.size(); ++i)
+	{
+		if( roots_[i] == "" )
+		{
+			// roots_[i] = leaf;
+			std::swap(roots_[i],leaf);
+			break;
+		}
+		else
+		{
+			leaf = hash(roots_[i],leaf);
+			roots_[i] = "";
+		}
+	}
+	if(leaf != "" )
+	{
+		roots_.push_back(leaf);
+		leaf = "";
+	}
 
- }
+}
 
+
+// --------------------------- //
+// --- The root() function --- //
+// --------------------------- //
+template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
+std::string MerkelHasher<H,M>::root()
+{
+	// First the forest of complete 
+	// trees must be merged. This is 
+	// done from right to left.
+
+	// Find the first entry in the roots_ vector, which is a non-empty string.
+	std::vector<std::string>::iterator it = std::find_if(roots_.begin(), roots_.end(), [](std::string s){ return s != ""; } );
+	std::string r = *it;
+	++it;
+
+	// Tansvers the roots_ vector and hash r with all non-empty strings
+	// for (uint i=0; i<roots_.size(); ++i)
+	for ( ; it < roots_.end(); ++it)
+	{
+		// if (roots_[i] != "")
+		if (*it != "")
+		{
+			// r = hash(roots_[i],r);
+			r = hash(*it,r);
+		}
+	}
+
+	// Return the root
+	return r;
+}
 
 
 #endif // MERKEL_HASHER_HPP
