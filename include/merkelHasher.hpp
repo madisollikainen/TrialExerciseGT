@@ -50,7 +50,7 @@
  	 * container have been used, which take care of destrying themselves.
  	 *
  	 */
- 	MerkelHasher(){ roots_.push_back("");}
+ 	// MerkelHasher(){ roots_.push_back("");}
 
 
  	/*
