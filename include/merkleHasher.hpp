@@ -103,6 +103,8 @@ struct MerkleHasher
 	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 	hash_chain_t getHashChain( const std::string file, std::string target_line); 
 
+	// --- selfConsistentHashChain --> a method for verifying if the hash chain is self-consistent
+	bool selfConsistentHashChain(hash_chain_t& chain);
 
 // private:
 
@@ -372,6 +374,53 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 	// Return the hash chain
 	return chain;
 } 
+
+
+
+
+// --- selfConsistentHashChain --> a method for verifying if the hash chain is self-consistent
+template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
+bool MerkleHasher<H,M>::selfConsistentHashChain(hash_chain_t& chain)
+{
+	// Chain of size 0 or 1 is always self-consisten
+	if( chain.size() < 2)
+	{
+		return true;
+	}
+	// The chain must always be of size 0 or a odd number
+	else if ( chain.size() % 2 == 0 )
+	{
+		return false;
+	}
+	else
+	{
+		for(uint i=0; i < chain.size() - 2; i=i+2  )
+		{
+			std::string tmp_hash;
+			if(chain[i].first == 0)
+			{
+				tmp_hash = hash( chain[i].second, chain[i+1].second );
+			}
+			else
+			{
+				tmp_hash = hash( chain[i+1].second, chain[i].second );
+			}
+
+			if( tmp_hash != chain[i+2].second)
+			{
+				return false;
+			}
+			if(chain[i].first == chain[i+1].first)
+			{
+				return false;
+			}
+		}
+	}
+
+	// If the control mechanism have not yet returned with false, then 
+	// the chain is self consistent. 
+	return true;
+}
 
 
 

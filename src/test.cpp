@@ -13,8 +13,8 @@ int main( int argc, char **argv )
 {
 
 	std::string infile(argv[1]);
-	// MerkleHasher<sha256,myHashMerge> myHasher;
-	MerkleHasher<self_hash,myHashMerge> myHasher;
+	MerkleHasher<sha256,myHashMerge> myHasher;
+	// MerkleHasher<self_hash,myHashMerge> myHasher;
 
 	std::vector<std::string> leafs;
 
@@ -33,6 +33,39 @@ int main( int argc, char **argv )
 		std::cout << hc_3[i].first << "\t|\t" << hc_3[i].second << std::endl;
 
 	}
+
+	if ( myHasher.selfConsistentHashChain(hc_3))
+	{
+		std::cout << "Hash chain hc_3 is self-consistant" << std::endl; 
+	}
+	else
+	{
+		std::cout << "Hash chain hc_3 is NOT self-consistant" << std::endl; 
+	}
+
+	hash_chain_t hc_3_7 = hc_3;
+	hc_3_7[0].second = myHasher.hash("7");
+	
+	if ( myHasher.selfConsistentHashChain(hc_3_7))
+	{
+		std::cout << "Hash chain hc_3_7 is self-consistant" << std::endl; 
+	}
+	else
+	{
+		std::cout << "Hash chain hc_3_7 is NOT self-consistant" << std::endl; 
+	}
+
+	hc_3_7[0].second = myHasher.hash("2");
+	
+	if ( myHasher.selfConsistentHashChain(hc_3_7))
+	{
+		std::cout << "Hash chain hc_3_7 is self-consistant" << std::endl; 
+	}
+	else
+	{
+		std::cout << "Hash chain hc_3_7 is NOT self-consistant" << std::endl; 
+	}
+
 
 
 	// const std::string s1("LogTest1");
