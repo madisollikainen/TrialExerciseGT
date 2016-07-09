@@ -12,7 +12,55 @@
  *
  *	 
  *	The Merkel tree structure will be formed similarly 
- *	as suggested in [1]
+ *	as suggested in [1]. Following [1] a 'canonical' 
+ *	hash tree is formed, which can be grown without
+ *	previously knowing the number of leaves it will 
+ *	contain. 
+ *
+ *	The 'canonical' hash tree is a binary hash tree, which 
+ *	can be constructed as follows:
+ *		
+ *		1)	The leaves (hashes of the log file entries) are
+ *			added from left-to-right. 
+ *		
+ *		2)	Moving from left-to-right the leaves will be gathered
+ *			into a forest of complete trees. 
+ *		
+ *		3)	All of the complete trees will be as large as possible
+ *			with the currently available leaves. Due to the above 
+ *			mentioned process it is clear that larger trees will be
+ *			on the left and smaller on the right.
+ *
+ *		4)	When parsing of a file (or any other input entity) is 
+ *			complete and no more leaves (entries) are added to the 
+ *			tree, the resulting forest of complete trees can be 
+ *			merged into a single 'canonical' tree. This merger is
+ *			done by merging the root nodes of trees in the forest
+ *			from right-to-left. Thus first the two smallest trees 
+ *			are merged to form a larger tree, which is then in turn 
+ *			merged with the third smallest tree. This procedure is
+ *			repeated until all of the trees have been merge into one.
+ *			
+ *
+ *	For singing/time-stamping a file, the root of the 'canonical' Merkel tree formed
+ *	from the file can be signed. And for verifying the existance of a single line 
+ *	in the file, the hash chain stsrting from the hash of that line to the root of the 
+ *	tree can be used. Thus the MerkelHasher class will implement the following functions:
+ *		
+ *		a)	'getRoot', which takes a file and outputes the root of its Merkel Tree.
+ *	 		Additionally this function will store the leaf values into a inpputed vector.
+ *
+ *		b)	'getHashChain', which takes a file and a string corresponding to a line in the 
+ *			file. It will go trough a similar process as function 'getRoot', but in addition
+ *			it will keep track of the nodes which should be present in the hash chain and 
+ *			outputs the hash chain as an vector of pairs. The pairs will consist of an integer
+ *			and a string. The integer will refer to the order in which the corresponding hash
+ *			is submitted to the hash merging function to generate a new node. And the string
+ *			will hold the hash itself. The hash chain will always have either zero or a odd
+ *			number of entries. If the presented line is not present in the file, the hash chain
+ *			will be zero. Otherwise, the odd entries correspond to the 'main chain' and the 
+ *			even entries correspond to the 'side chains'.  
+ *	 
  *
  * 	Ref: 
  *		[1] Ahto Buldas, Ahto Truu, Risto Laanoja, Rainer Gerhards:
@@ -28,193 +76,44 @@
 #include <string>
 #include <algorithm>
 #include <utility>
- #include <fstream>
+#include <fstream>
+
+
+// Typedef the hash_chain_t type as a vector of pairs of int and string
+typedef std::vector< std::pair<int, std::string> > hash_chain_t;
 
 
 /*****************************************************
  *** The templated MerkelHasher class declaration. ***
  *****************************************************/
+template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
+// class MerkelHasher
+struct MerkelHasher
+{
+
+// public:
+
+	// Wrappers for hashing: either a single or two values
+	std::string hash(const std::string s){	return H(s);	}
+	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
+
+	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+	std::string getRoot( const std::string file, std::vector<std::string>& leafs); 
+
+	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
+	hash_chain_t getHashChain( const std::string file, std::string target_line); 
 
 
-typedef std::vector< std::pair<int, std::string> > hash_chain_t;
-
- template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
- class MerkelHasher
- {
-
- public:
+// private:
 
 
- 	/*
- 	 * Simple consturctor adding the initial empty
- 	 * string to the roots_ vector. The placement of 
- 	 * empty strings in the roots_ vector will be used
- 	 * as information carriers during the construction of
- 	 * the 'canonical' Merkel Tree. 
- 	 *
- 	 * No specific destructor must be declared, as only STL 
- 	 * container have been used, which take care of destrying themselves.
- 	 *
- 	 */
- 	// MerkelHasher(){ roots_.push_back("");}
-
-
- 	/*
- 	 *	The hashing functions. Both for one 
- 	 *	and two std::string inputs.
- 	 */
- 	std::string hash(const std::string s){	return H(s);	}
- 	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
-
- 	// An add function for adding entries into the tree. 
- 	// The entries will be hashed before becoming leafs.
- 	// void add(std::string s){ add_leaf_( hash(s) ); }
-
- 	// Clear function for returning the MerkelHasher to the initial state
- 	// void clear(){ leafs_.clear(); roots_.clear();  }
-
- 	// A function for merging the forest and getting the root
- 	// std::string root();
-
-
- 	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
- 	std::string getRoot( const std::string file, std::vector<std::string>& leafs); 
-
-
- 	// --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
- 	hash_chain_t getHashChain( const std::string file, std::string target_line); 
-
-
-
- 	// A test function
- 	// void test(const std::string leaf)
- 	// {
- 	// 	add_leaf_(leaf);
-
- 	// 	std::cout << "Added a new leaf: " << leaf << std::endl;
- 	// 	std::cout << "leafs_ vector: ";
- 	// 	for (uint i=0; i<leafs_.size(); ++i) { std::cout << leafs_[i] << " "; }
- 	// 	std::cout << std::endl << "roots_ vector: ";
- 	// 	for (uint i=0; i<roots_.size(); ++i) 
- 	// 	{ 	if(roots_[i]=="") std::cout << "-" << " ";
- 	// 		else std::cout << roots_[i] << " ";  
- 	// 	}
- 	// 	std::cout<<std::endl;
- 	// 	std::cout<<std::endl;
- 	// 	std::cout << "Root of the Merkel tree: " << root() << std::endl;
-
-
- 	// }
-
-
- private:
-
- 	// std::vector<std::string> leafs_;	// Vector to hold the leaf hashes
- 	// std::vector<std::string> roots_;	
-
- 	/*
- 	 * A helper function for adding a single leaf 
- 	 * into the tree. The function body will be 
- 	 * 
- 	 */
- 	 // void add_leaf_(std::string leaf);
-
- 	 /*
- 	  * A helper function for getting the hash chain
- 	  */
- 	 // void collect_hash_chain_(std::string& targer, std::string& left_hash, std::string& right_hash, hash_chain_t& chain ); 
-
- }; // END MERKELHASHER DECLARATION
+}; // END MERKELHASHER DECLARATION
 
 
 
 /*****************************************************
  *** The MerkelHasher member function definitions. ***
  *****************************************************/
-
-// ------------------------------ //
-// --- The add_leaf_ function --- //
-// ------------------------------ //
-// template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-// void MerkelHasher<H,M>::add_leaf_(std::string leaf)
-// {
-// 	// Add the new leaf to the leafs vector
-// 	leafs_.push_back(leaf);
-
-// 	// Traverse the roots_ vector and update it.
-// 	// Traversal is done with simple rules:
-// 	//
-// 	//		a)	If the roots_[i] is an empty string,
-// 	//			set it to be the current 'leaf' value
-// 	//			roots_[i] = leaf. Finish the loop.
-// 	//
-// 	// 		b)	If roots_[i] is a non-empty string,
-// 	//		 	then hash it together with the leaf
-// 	//			leaf = hash(roots_[i],leaf) and set 
-// 	//			change it to empty string roots_[i]="". 
-// 	//			After that carry on with the loop.
-// 	//		
-// 	//		c)	If the end of the vector roots_ is reach
-// 	//			without finding an empty roots_[i], then 
-// 	//			push the hashed together leaf to the end 
-// 	//			end of the roots_ vector.
-// 	//			   
-// 	//
-// 	for (uint i=0; i<roots_.size(); ++i)
-// 	{
-// 		if( roots_[i] == "" )
-// 		{
-// 			// roots_[i] = leaf;
-// 			std::swap(roots_[i],leaf);
-// 			break;
-// 		}
-// 		else
-// 		{
-// 			leaf = hash(roots_[i],leaf);
-// 			roots_[i] = "";
-// 		}
-// 	}
-// 	if(leaf != "" )
-// 	{
-// 		roots_.push_back(leaf);
-// 		leaf = "";
-// 	}
-
-// }
-
-
-// --------------------------- //
-// --- The root() function --- //
-// --------------------------- //
-// template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-// std::string MerkelHasher<H,M>::root()
-// {
-// 	// First the forest of complete 
-// 	// trees must be merged. This is 
-// 	// done from right to left.
-
-// 	// Find the first entry in the roots_ vector, which is a non-empty string.
-// 	std::vector<std::string>::iterator it = std::find_if(roots_.begin(), roots_.end(), [](std::string s){ return s != ""; } );
-// 	std::string r = *it;
-// 	++it;
-
-// 	// Tansvers the roots_ vector and hash r with all non-empty strings
-// 	// for (uint i=0; i<roots_.size(); ++i)
-// 	for ( ; it < roots_.end(); ++it)
-// 	{
-// 		// if (roots_[i] != "")
-// 		if (*it != "")
-// 		{
-// 			// r = hash(roots_[i],r);
-// 			r = hash(*it,r);
-// 		}
-// 	}
-
-// 	// Return the root
-// 	return r;
-// }
-
-
 
 
 // --- getMerkelRoot --> a unified method for getting the root and leafs of a MerkelTree --- //
@@ -233,6 +132,24 @@ std::string MerkelHasher<H,M>::getRoot( const std::string file, std::vector<std:
 
 	// Loop over the lines in the file and 
 	// generate the complete-tree-forest
+	// Traverse the roots_ vector and update it.
+	// The traversal is done with simple rules:
+	//
+	//		a)	If the roots_[i] is an empty string,
+	//			set it to be the current 'leaf' value
+	//			roots_[i] = leaf. Finish the loop.
+	//
+	// 		b)	If roots_[i] is a non-empty string,
+	//		 	then hash it together with the leaf
+	//			leaf = hash(roots_[i],leaf) and set 
+	//			change it to empty string roots_[i]="". 
+	//			After that carry on with the loop.
+	//		
+	//		c)	If the end of the vector roots_ is reach
+	//			without finding an empty roots_[i], then 
+	//			push the hashed together leaf to the end 
+	//			end of the roots_ vector.
+	//
 	std::string line; 
 	while( std::getline(input_file, line) )
 	{
@@ -311,6 +228,46 @@ hash_chain_t MerkelHasher<H,M>::getHashChain( const std::string file, std::strin
 
 	// Loop over the lines in the file and 
 	// generate the complete-tree-forest
+	// Traverse the roots_ vector and update it.
+	// The traversal is done with simple rules:
+	//
+	//		a)	If the roots_[i] is an empty string,
+	//			set it to be the current 'leaf' value
+	//			roots_[i] = leaf. Finish the loop.
+	//
+	// 		b)	If roots_[i] is a non-empty string,
+	//		 	then hash it together with the leaf
+	//			leaf = hash(roots_[i],leaf) and set 
+	//			change it to empty string roots_[i]="". 
+	//			After that carry on with the loop.
+	//		
+	//		c)	If the end of the vector roots_ is reach
+	//			without finding an empty roots_[i], then 
+	//			push the hashed together leaf to the end 
+	//			end of the roots_ vector.
+	//
+	// During the traversal, the hash chain will also
+	// be gatherd. That is done in the following way:
+	//
+	//		1) 	We always keep track of the next value, 
+	//			which should be added to the hash chain.
+	//			This value is stored in the variable 'target'
+	//			and its initial value is the hash of the  
+	//			target_line.
+	//
+	//		2)	Every time when two hashes are 'merged' and 
+	//			re-hashed to form a new node in the tree 
+	//			(during roots_ traversal) the code checks 
+	//			if one of these hashes matches the target value.
+	//			If it does, then both of the hashes are added
+	//			to the hash chain, such that the hash, which
+	//			matched the target value is added first.
+	//			After that we know that the new node resulting
+	//			from hashing the above two together has to be 
+	//			the next value, which we add to the chain. Thus
+	//			it will be set to be the next target value.
+	//
+	//
 	std::string line; 
 	while( std::getline(input_file, line) )
 	{
@@ -375,6 +332,9 @@ hash_chain_t MerkelHasher<H,M>::getHashChain( const std::string file, std::strin
 	++it;
 
 	// Tansvers the roots_ vector and hash r with all non-empty strings
+	// During the hashing stage, use the same logic as during roots_ traversal
+	// above for adding values to the hash chain. In the end of this step the
+	// only missing value from the hash chain will be the final root.
 	for ( ; it < roots_.end(); ++it)
 	{
 		if (*it != "")
@@ -414,22 +374,7 @@ hash_chain_t MerkelHasher<H,M>::getHashChain( const std::string file, std::strin
 } 
 
 
-// ---------------------------------------- //
-// --- The collect_hash_chain_ function --- //
-// ---------------------------------------- //
-// template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-// void MerkelHasher<H,M>::collect_hash_chain_(std::string& target, std::string& left_hash, std::string& right_hash, hash_chain_t& chain )
-// {
-// 	if( left_hash == target )
-// 	{
-// 		chain.push_back( std::make_pair(0,left_hash) );
-// 		chain.push_back( std::make_pair(1,right_hash) );
-// 		target=hash( )	
-// 	}
-// 	else if ( h2 == target )
-// 	{
 
-// 	}
-// }
+
 
 #endif // MERKEL_HASHER_HPP
