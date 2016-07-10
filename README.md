@@ -25,6 +25,6 @@ For both of executables build/hasher and build/test_hasher the only compulsory a
 
 -i [log\_file\_name] 
 
-The executables produce help messages in the expected way (-h or --help). If they are called with just the log file argument, then only root signing is conducted. For hash chain extraction add --chain [file_with_requested_lines] and for storing the leaves --leaves.  
+The executables produce help messages in the expected way (-h or --help). If they are called with just the log file argument, then only root signing is conducted. For hash chain extraction add --chain [file_with_requested_lines] and for storing the leaves add --leaves.  
 
 For ease of testing the code output, script run_test.sh has been added. It calls the test_hasher with numbers.log, storing the signature, leaves and the hash chains for all the lines. 
