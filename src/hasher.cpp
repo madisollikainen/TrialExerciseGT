@@ -46,6 +46,7 @@
 
 int main( int argc, char **argv )
 {
+
 	// -------------------------------- //
 	// ------ COMMANDLINE PARSING ----- //
 	// -------------------------------- //
@@ -158,10 +159,13 @@ int main( int argc, char **argv )
 	// ---------------------------- //
 
 	// --- Constructing a MerkleHasher instance --- //
-	// Using the sha256 and myHashMerge functions 
-	// as defined in myHashInterface.hpp
-	MerkleHasher<sha256,myHashMerge> myHasher;
-
+	#ifdef TEST
+		// For test use the identity_hash and myHashMerge functions 
+		MerkleHasher<identity_hash,myHashMerge> myHasher;
+	#else
+		// Ese the sha256 and myHashMerge functions
+		MerkleHasher<sha256,myHashMerge> myHasher;
+	#endif
 
 	// --- Generating the hash chains if asked --- //
 	if(HASH_CHAIN)

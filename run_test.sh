@@ -23,4 +23,18 @@ mkdir -p test_output
 mv example_logs/numbers.log.* test_output/
 
 # Echo that the script has completed
+echo ''
 echo 'Completed running tests'
+echo ''
+
+
+# Now print the numbers.log and the output files
+
+for file in example_logs/numbers.log test_output/*.leaves test_output/*.signature test_output/*.hash_chain*
+do 
+	echo ${file}
+	cat ${file}
+	echo "" 
+done
+
+
