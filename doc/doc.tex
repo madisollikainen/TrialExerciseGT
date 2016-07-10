@@ -216,18 +216,18 @@ The \ct{Makefile} for making the compilation easier.
 \subsubsection{Compilation} % (fold)
 \label{ssub:compilation}
 
-Before compiling one should refer to the \ct{Makefile} and check that the compiler used (currently GCC) is compatible with their system. Also, if the \ct{OpenSLL} library is not in the path, then one should change line 27: 
+Before compiling one should refer to the \ct{Makefile} and check that the compiler used (currently GCC) is compatible with their system. The code is dependent on \ct{OpenSLL} library (https://www.openssl.org/). If its installation directory is not in the path, then one should change line 27: 
 
 \begin{center}\ct{OpenSSL = -lssl -lcrypto} \hspace{2pt} $\rightarrow$ \hspace{2pt} \ct{OpenSSL = -lssl -lcrypto -L<path\_to\_OpenSSL>}\end{center}
 
-For compilation just call type \ct{make} on the command line. The resulting executable will be place into directory \ct{built}. At the moment the code has only been tested on Linux. It should work without issues on a Mac. I'm not sure about Windows machines. 
+For compilation just call \ct{make} on the command line. The resulting executables will be placed into directory \ct{built/}. At the moment the code has only been tested on Linux. It should work without issues on a Mac. I'm not sure about Windows machines. 
 
 % subsubsection compilation (end)
 
 \subsubsection{Running} % (fold)
 \label{ssub:running}
 
-For both of the executables \ct{build/hasher} and \ct{build/test\_hasher} the only compulsory argument is the log file name, which can be passed as \ct{-i <log\_file\_name>}. The executables produce help messages in the expected way (\ct{-h} or \ct{-{}-help}). If they are called with just the log file argument, then only root signing is conducted. For hash chain extraction use \ct{-{}-chain <file\_with\_requested\_lines>} and for storing the leaves, just add \ct{-{}-leaves}.  
+For both of executables \ct{build/hasher} and \ct{build/test\_hasher} the only compulsory argument is the log file name, which can be passed as \ct{-i <log\_file\_name>}. The executables produce help messages in the expected way (\ct{-h} or \ct{-{}-help}). If they are called with just the log file argument, then only root signing is conducted. For hash chain extraction use \ct{-{}-chain <file\_with\_requested\_lines>} and for storing the leaves, just add \ct{-{}-leaves}.  
 
 For ease of testing the code output, I've include a script \ct{run\_test.sh}. It calls the \ct{test\_hasher} with \ct{numbers.log}, storing the signature, leaves and the hash chains for all the lines. The script moves the output files into a separate directory and prints them to the command line.  
 
