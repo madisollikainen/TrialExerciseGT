@@ -87,29 +87,33 @@ typedef std::vector< std::pair<int, std::string> > hash_chain_t;
  *** The templated MerkleHasher class declaration. ***
  *****************************************************/
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-// class MerkleHasher
-struct MerkleHasher
+class MerkleHasher
+// struct MerkleHasher
 {
 
-// public:
+public:
 
 	// Wrappers for hashing: either for one or two inputs
 	std::string hash(const std::string s){	return H(s);	}
 	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
 
 	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
-	std::string getRoot( const std::string file, std::vector<std::string>& leafs); 
+	std::string getRoot( const std::string file, bool saveLeaves);
+
 
 	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
-	hash_chain_t getHashChain( const std::string file, std::string target_line); 
+	hash_chain_t getHashChain( const std::string file, std::string target_line, bool saveLeaves); 
 
 	// --- selfConsistentHashChain --> a method for verifying if the hash chain is self-consistent
 	bool selfConsistentHashChain(hash_chain_t& chain);
 
+	// --- Getter for the leaves vector --- //
+	std::vector<std::string> getLeaves() { return leaves; }
+
 	
 
-// private:
-
+private:
+	std::vector<std::string> leaves;
 
 }; // END MERKLEHASHER DECLARATION
 
@@ -122,8 +126,11 @@ struct MerkleHasher
 
 // --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-std::string MerkleHasher<H,M>::getRoot( const std::string file, std::vector<std::string>& leafs)
+std::string MerkleHasher<H,M>::getRoot( const std::string file, bool saveLeaves)
 {
+	// Always clear the leaves vector
+	leaves.clear();
+
 	// Initialise the output
 	std::string root;
 
@@ -162,7 +169,7 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, std::vector<std:
 		{
 			// Get the hash of the line and store the leaf
 			std::string leaf = hash(line);
-			leafs.push_back(leaf);
+			if(saveLeaves) { leaves.push_back(leaf); }	
 
 			// Loop over the complete-tree-forest roots
 			for (uint i=0; i<roots_.size(); ++i)
@@ -217,8 +224,11 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, std::vector<std:
 
 // --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
-hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::string target_line)
+hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::string target_line, bool saveLeaves)
 {
+	// Always clear the leaves vector
+	leaves.clear();
+
 	// Initialise the output
 	hash_chain_t chain;
 
@@ -284,6 +294,7 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 		{
 			// Get the hash of the line (a new leaf)
 			std::string leaf = hash(line);
+			if(saveLeaves) { leaves.push_back(leaf); }
 			
 			// Loop over the complete-tree-forest roots
 			for (uint i=0; i<roots_.size(); ++i)

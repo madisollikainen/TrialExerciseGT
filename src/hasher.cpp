@@ -39,7 +39,8 @@ int main( int argc, char **argv )
 	 *						will be signed.
 	 *	--chain 			If given, then the hash chain
 	 *						corresponding to -l <line_string>
-	 *						will be retrived. 				
+	 *						will be retrived.
+	 *	--leaves <file>	If given, save the leafs into <file_name> 				
 	 * 
 	 *
 	 */
@@ -50,17 +51,19 @@ int main( int argc, char **argv )
 	std::string log_signature_file;
 	std::string hash_chain_file;
 	std::string hash_chain_line;
-
+	std::string leaves_file;
 
 	bool SIGN=false;
 	bool HASH_CHAIN=false;
-	bool VERIFY=false;
+	bool LEAVES=false;
+	// bool VERIFY=false;
 
 	// Get the VERSION and EXE_NAME which and generate NAME_HEAD and USAGE_MESSAGE
 	std::string NAME_HEAD = "Guardtime trial excersise by Madis Ollikainen.\nVersion: " + std::string(VERSION);
-	std::string USAGE_MESSAGE = "Usage: \n\t./" + std::string(EXE_NAME) + " -i <log_file path> --sign\n\t./" 
-												+ std::string(EXE_NAME) + " -i <log_file path> -l <line_string> --chain\n\t./"
-												+ std::string(EXE_NAME) + " -i <log_file path> -l <line_string> --sign --chain";
+	std::string USAGE_MESSAGE = "Usage: \n\t./" + std::string(EXE_NAME) + " -i <log_file path>\n\t./"
+												+ std::string(EXE_NAME) + " -i <log_file path> --sign (--leaves)\n\t./" 
+												+ std::string(EXE_NAME) + " -i <log_file path> -l <line_string> --chain (--leaves)\n\t./"
+												+ std::string(EXE_NAME) + " -i <log_file path> -l <line_string> --sign --chain (--leaves)";
 
 	// Combine the HELP_MESSAGE
 	std::string HELP_MESSAGE = "\n";
@@ -76,6 +79,7 @@ int main( int argc, char **argv )
 	HELP_MESSAGE +=	 "\n";
 	HELP_MESSAGE +=  "\t--sign\t\t\tIf given, then the log file\n\t\t\t\twill be signed.\n";
 	HELP_MESSAGE +=  "\t--chain\t\t\tIf given, then the hash chain\n\t\t\t\tcorresponding to -l <line_string>\n\t\t\t\twill be retrived.\n";
+	HELP_MESSAGE +=  "\t--leaves\t\tIf given, save the leaves.\n";
 	HELP_MESSAGE +=	 "\n";
 
 	// --- Help message parsing --- //
@@ -132,6 +136,13 @@ int main( int argc, char **argv )
 		SIGN=true;
 	}
 
+	// --- leaves saving option --- //
+	if(cmdOptionExists(argv, argv+argc, "--leaves") )
+	{
+		LEAVES=true;
+		leaves_file = log_file + ".leaves";
+	}
+
 
 	/*
 	 *	Dependent on the commandline arguments, now run the code.
@@ -145,8 +156,12 @@ int main( int argc, char **argv )
 	// If --chain, then generate the hash chain
 	if(HASH_CHAIN)
 	{
+
+		// Information massage 
+		std::cout << "Calculating hash chain ... ";
+
 		// Calculate the hash chain
-		hash_chain_t hash_chain_out = myHasher.getHashChain(log_file, hash_chain_line);
+		hash_chain_t hash_chain_out = myHasher.getHashChain(log_file, hash_chain_line, LEAVES);
 		
 		// Check if the hash chain is not empty
 		if(hash_chain_out.empty())
@@ -166,10 +181,41 @@ int main( int argc, char **argv )
 		}
 		hc_out.close();
 
+		// Information massage 
+		std::cout << "completed" << std::endl;
+
+		// If --leaves was active, print the leaves
+		if(LEAVES)
+		{
+
+			// Information massage 
+			std::cout << "Printing leaves ... "; 
+			
+			std::vector<std::string> leaves = myHasher.getLeaves();
+			std::ofstream leaves_out(leaves_file);
+			if(leaves_out.is_open())
+			{
+				for (uint i=0; i<leaves.size(); ++i)
+				{
+					leaves_out << leaves[i] << std::endl; 
+				}
+			}
+			leaves_out.close();
+
+
+			// Information massage 
+			std::cout << "completed" << std::endl;
+		}
+
+
+
 		// If --sign was also active, get the Merkle tree root
 		// from the hash chain and sign it.
 		if(SIGN)
 		{
+			// Information massage 
+			std::cout << "Signing the Merkle root ... "; 
+
 			std::ofstream signature_out(log_signature_file);
 			if(signature_out.is_open())
 			{
@@ -177,15 +223,22 @@ int main( int argc, char **argv )
 				signature_out << signature( hash_chain_out.back().second ) << std::endl;
 			}
 			signature_out.close();
+
+			// Information massage 
+			std::cout << "completed" << std::endl;
 		} // END SIGN
 	} // END HASH_CHAIN
 	else if(SIGN)
 	{
-		// Initialise the leafs vector
-		std::vector<std::string> leafs;
-
+		// Information massage 
+		std::cout << "Calculating the Merkle root ... "; 
+		
 		// Calculate the root of the Merkle tree of the log file
-		std::string root = myHasher.getRoot(log_file, leafs);
+		std::string root = myHasher.getRoot(log_file, LEAVES);
+
+		// Information massage 
+		std::cout << "completed" << std::endl;
+		std::cout << "Signing the Merkle root ... ";
 
 		// Output the signed Merkle root
 		std::ofstream signature_out(log_signature_file);
@@ -194,6 +247,31 @@ int main( int argc, char **argv )
 			signature_out << signature( root ) << std::endl;
 		}
 		signature_out.close();
+
+		// Information massage 
+		std::cout << "completed" << std::endl;
+
+		// If --leaves was active, print the leaves
+		if(LEAVES)
+		{
+			// Information massage 
+			std::cout << "Printing leaves ... "; 
+			
+			std::vector<std::string> leaves = myHasher.getLeaves();
+			std::ofstream leaves_out(leaves_file);
+			if(leaves_out.is_open())
+			{
+				for (uint i=0; i<leaves.size(); ++i)
+				{
+					leaves_out << leaves[i] << std::endl; 
+				}
+			}
+			leaves_out.close();
+
+			// Information massage 
+			std::cout << "completed" << std::endl;
+		}
+
 	} // END SIGN
 
 

@@ -27,10 +27,10 @@ OpenSSL = -lssl -lcrypto
 
 
 
-all: ${EXE} test 
+all: ${EXE}  
 
-test: ${SRC}/test.cpp ${HEADERS}/*.hpp ${BUILD}
-	${CC} ${CFLAGS} ${OPT} -o ${BUILD}/test ${SRC}/test.cpp ${OpenSSL} -I${HEADERS}
+# test: ${SRC}/test.cpp ${HEADERS}/*.hpp ${BUILD}
+# 	${CC} ${CFLAGS} ${OPT} -o ${BUILD}/test ${SRC}/test.cpp ${OpenSSL} -I${HEADERS}
 
 ${EXE}: ${SRC}/${EXE}.cpp ${HEADERS}/*.hpp ${BUILD}
 	${CC} ${CFLAGS} ${OPT} -o ${BUILD}/${EXE} ${SRC}/${EXE}.cpp ${OpenSSL} -I${HEADERS}
