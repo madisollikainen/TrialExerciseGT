@@ -49,8 +49,8 @@ int main( int argc, char **argv )
 
 	std::string log_file;
 	std::string log_signature_file;
-	std::string hash_chain_file;
-	std::string hash_chain_line;
+	// std::string hash_chain_file;
+	std::string hash_chain_lines_file;
 	std::string leaves_file;
 
 	bool SIGN=false;
@@ -60,10 +60,10 @@ int main( int argc, char **argv )
 
 	// Get the VERSION and EXE_NAME which and generate NAME_HEAD and USAGE_MESSAGE
 	std::string NAME_HEAD = "Guardtime trial excersise by Madis Ollikainen.\nVersion: " + std::string(VERSION);
-	std::string USAGE_MESSAGE = "Usage: \n\t./" + std::string(EXE_NAME) + " -i <log_file path>\n\t./"
-												+ std::string(EXE_NAME) + " -i <log_file path> --sign (--leaves)\n\t./" 
-												+ std::string(EXE_NAME) + " -i <log_file path> -l <line_string> --chain (--leaves)\n\t./"
-												+ std::string(EXE_NAME) + " -i <log_file path> -l <line_string> --sign --chain (--leaves)";
+	std::string USAGE_MESSAGE = "Usage: \n\t./" + std::string(EXE_NAME) + " -i <log_file path> (--leaves)\n\t./"
+												// + std::string(EXE_NAME) + " -i <log_file path> --sign (--leaves)\n\t./" 
+												+ std::string(EXE_NAME) + " -i <log_file path> --chain <lines_file> (--leaves)\n\t./"
+												+ std::string(EXE_NAME) + " -i <log_file path> --chain <lines_file> --sign (--leaves)";
 
 	// Combine the HELP_MESSAGE
 	std::string HELP_MESSAGE = "\n";
@@ -75,10 +75,10 @@ int main( int argc, char **argv )
 	HELP_MESSAGE +=  "\t-v\t(--version)\tPrints the code version\n\t\t\t\tdefined by the git version.\n";
 	HELP_MESSAGE +=	 "\n";
 	HELP_MESSAGE +=  "\t-i\t<file_name>\tThe log file (REQUIRED).\n";
-	HELP_MESSAGE +=  "\t-l\t<line_string>\tThe log file line, for which to\n\t\t\t\tget the hash chain. Required if\n\t\t\t\t--chain flag is used.\n";
+	// HELP_MESSAGE +=  "\t-l\t<line_string>\tThe log file line, for which to\n\t\t\t\tget the hash chain. Required if\n\t\t\t\t--chain flag is used.\n";
 	HELP_MESSAGE +=	 "\n";
 	HELP_MESSAGE +=  "\t--sign\t\t\tIf given, then the log file\n\t\t\t\twill be signed.\n";
-	HELP_MESSAGE +=  "\t--chain\t\t\tIf given, then the hash chain\n\t\t\t\tcorresponding to -l <line_string>\n\t\t\t\twill be retrived.\n";
+	HELP_MESSAGE +=  "\t--chain <lines_file>\tIf given, then the hash chains\n\t\t\t\tcorresponding to lines in <lines_file>\n\t\t\t\twill be retrived.\n";
 	HELP_MESSAGE +=  "\t--leaves\t\tIf given, save the leaves.\n";
 	HELP_MESSAGE +=	 "\n";
 
@@ -116,19 +116,21 @@ int main( int argc, char **argv )
 	if(cmdOptionExists(argv, argv+argc, "--chain") )
 	{
 		HASH_CHAIN=true;
+		char * tmp = getCmdOption(argv, argv + argc, "--chain"); 
+		hash_chain_lines_file = std::string(tmp);
 
-		// If hash chain is requested, search for the line
-		if(cmdOptionExists(argv, argv+argc, "-l") )
-		{
-			char * tmp = getCmdOption(argv, argv + argc, "-l"); 
-			hash_chain_line = std::string(tmp);
-			hash_chain_file = log_file + ".hash_chain";
-		}
-		else
-		{
-			std::cout << "\nMissing log file line for which to extract hash chain!" << std::endl;
-			std::cout << "For more details see: -h or --help" << std::endl; 
-		}
+		// // If hash chain is requested, search for the line
+		// if(cmdOptionExists(argv, argv+argc, "-l") )
+		// {
+		// 	char * tmp = getCmdOption(argv, argv + argc, "-l"); 
+		// 	hash_chain_lines_file = std::string(tmp);
+		// 	hash_chain_file = log_file + ".hash_chain";
+		// }
+		// else
+		// {
+		// 	std::cout << "\nMissing log file line for which to extract hash chain!" << std::endl;
+		// 	std::cout << "For more details see: -h or --help" << std::endl; 
+		// }
 	}
 	// By default only sign
 	if( !SIGN && !HASH_CHAIN )
@@ -156,77 +158,104 @@ int main( int argc, char **argv )
 	// If --chain, then generate the hash chain
 	if(HASH_CHAIN)
 	{
+		std::string root; // In case signing is in order
 
-		// Information massage 
-		std::cout << "Calculating hash chain ... ";
-
-		// Calculate the hash chain
-		hash_chain_t hash_chain_out = myHasher.getHashChain(log_file, hash_chain_line, LEAVES);
-		
-		// Check if the hash chain is not empty
-		if(hash_chain_out.empty())
+		// Open the lines file for the hash chain
+		std::ifstream lines(hash_chain_lines_file);
+		if( lines.is_open() )
 		{
-			std::cout << "The inputed line is not present in the log file!" << std::endl;
-			return -1;
-		}
+			// Loop the lines
+			std::string line;
+			int line_nr = 0; 
+			while( std::getline(lines, line) )
+			{	
+				line_nr++;
+				// Information massage 
+				std::cout << "Calculating hash chain number " + std::to_string(line_nr) + " ... ";
 
-		// Print the hash chain
-		std::ofstream hc_out(hash_chain_file);
-		if(hc_out.is_open())
-		{
-			for (uint i=0; i<hash_chain_out.size(); ++i)
-			{
-				hc_out << hash_chain_out[i].first << "\t" << hash_chain_out[i].second << std::endl; 
-			}
-		}
-		hc_out.close();
-
-		// Information massage 
-		std::cout << "completed" << std::endl;
-
-		// If --leaves was active, print the leaves
-		if(LEAVES)
-		{
-
-			// Information massage 
-			std::cout << "Printing leaves ... "; 
-			
-			std::vector<std::string> leaves = myHasher.getLeaves();
-			std::ofstream leaves_out(leaves_file);
-			if(leaves_out.is_open())
-			{
-				for (uint i=0; i<leaves.size(); ++i)
+				// Calculate the hash chain
+				hash_chain_t hash_chain_out = myHasher.getHashChain(log_file, line, LEAVES);
+				
+				// Check if the hash chain is not empty
+				if( (hash_chain_out.empty()) )
 				{
-					leaves_out << leaves[i] << std::endl; 
+					// Information massage 
+					std::cout << "failed" << std::endl;
+					std::cout << "Input line number " << line_nr << " :\n" << line << std::endl;
+					std::cout << "\nThe line is not present in the log file!\n" << std::endl;
 				}
-			}
-			leaves_out.close();
+				else
+				{
+					// Information massage 
+					std::cout << "completed" << std::endl;
+					
+					// Print the hash chain
+					std::string hash_chain_file = log_file + ".hash_chain_" + std::to_string(line_nr);
+					std::ofstream hc_out(hash_chain_file);
+					if(hc_out.is_open())
+					{
+						for (uint i=0; i<hash_chain_out.size(); ++i)
+						{
+							hc_out << hash_chain_out[i].first << "\t" << hash_chain_out[i].second << std::endl; 
+						}
+					}
+					hc_out.close();
 
 
-			// Information massage 
-			std::cout << "completed" << std::endl;
+					// If --leaves was active, print the leaves (do it only once)
+					if(LEAVES)
+					{
+
+						// Information massage 
+						std::cout << "Printing leaves ... "; 
+						
+						std::vector<std::string> leaves = myHasher.getLeaves();
+						std::ofstream leaves_out(leaves_file);
+						if(leaves_out.is_open())
+						{
+							for (uint i=0; i<leaves.size(); ++i)
+							{
+								leaves_out << leaves[i] << std::endl; 
+							}
+						}
+						leaves_out.close();
+
+
+						// Information massage 
+						std::cout << "completed" << std::endl;
+
+						// Now set LEAVES to false (no need to print it again)
+						LEAVES=false;
+					}
+
+
+
+					// If --sign was also active, get the Merkle tree root
+					// from the hash chain and sign it. (do it only once)
+					if(SIGN)
+					{
+						// Information massage 
+						std::cout << "Signing the Merkle root ... "; 
+
+						std::ofstream signature_out(log_signature_file);
+						if(signature_out.is_open())
+						{
+							// The last entry in the hash_chain_out corresponds to the root 
+							signature_out << signature( hash_chain_out.back().second ) << std::endl;
+						}
+						signature_out.close();
+
+						// Information massage 
+						std::cout << "completed" << std::endl;
+
+						// Now set SIGN to false (no need to print it again)
+						SIGN=false;
+
+					} // END SIGN
+				}
+			} 
 		}
-
-
-
-		// If --sign was also active, get the Merkle tree root
-		// from the hash chain and sign it.
-		if(SIGN)
-		{
-			// Information massage 
-			std::cout << "Signing the Merkle root ... "; 
-
-			std::ofstream signature_out(log_signature_file);
-			if(signature_out.is_open())
-			{
-				// The last entry in the hash_chain_out corresponds to the root 
-				signature_out << signature( hash_chain_out.back().second ) << std::endl;
-			}
-			signature_out.close();
-
-			// Information massage 
-			std::cout << "completed" << std::endl;
-		} // END SIGN
+		lines.close();
 	} // END HASH_CHAIN
 	else if(SIGN)
 	{
