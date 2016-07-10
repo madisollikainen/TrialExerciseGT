@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={165mm,257mm},
+ left=22.5mm,
+ top=20mm,
+ }
+
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage[us]{datetime}
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[font=small,labelfont=bf]{subcaption}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{multicol}
+\usepackage{placeins}
+
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+\crefname{equation}{equation}{equations}
+\crefname{figure}{figure}{figures}
+
+\setlength{\parindent}{0in}
+\usepackage[parfill]{parskip}
+
+\usepackage[round]{natbib}
+\bibliographystyle{plainnat}
+
+% \usepackage{fancybox}
+% \usepackage{tikz}
+
+%% Input my macrosetup %%
+% \input{macrosetup.tex}
+
+\author{Madis Ollikainen}
+\title{Trial exercise for Guardtime: Merkle tree signing of log files}
+
+\begin{document}
+
+\maketitle
+
+In the following I'll shortly describe my code produced for the trial exercise from Guardtime. 
+
+\section*{Task overview} % (fold)
+\label{sec:task_overview}
+
+
+A binary hash tree or a Merkle tree is a binary tree, where all the nodes are constructed via hashing their child nodes
+
+\begin{equation}
+ \text{parent node} \leftarrow hash( \text{child node 1}, \text{child node 2} ). 	
+\end{equation} 
+
+For log file signing one can construct a Merkle tree, whose leaves are the hashes of the lines of the log file. This allows for verification procedures for both the file as an whole as well as individual lines in the file. For individual lines, a hash chain starting from the leaf and ending at the root must be extracted. My trial exercise was to construct a toy tool for log files signing, which would enable:  
+
+\begin{enumerate}
+  	\item Signing of an arbitrary text file via signing the root of a binary hash tree (Merkle tree), whose leaves correspond to the hashes of the lines in the file.
+  	\item Extraction of hash chains (from leaf to the root) for arbitrary lines in the text file.  
+\end{enumerate}  
+
+It was noted, that the signing processes itself can be implemented as just an empty function (a commented call to Guardtime SDK could also be added). The main part of the task was to implement the hash tree construction and hash chain extraction. Especially taking into account that the number of lines in a log file doesn't have to be a power of two. 
+
+% section task_overview (end)
+
+\section*{Algorithm \& code description} % (fold)
+\label{sec:algorithm_description}
+
+
+One of the key points in the task was the selection of an suitable tree structure for the Merkle tree. The tree should be easily constructible for any number of leaves without sacrificing too much of computational efficiency. I chose to use the \emph{canonical binary tree} introduced in \cite{Buldas2014}. Such an tree can be constructed in an \emph{on-line} manner, without previously knowing the number of leaves. The canonical Merkle tree used can neatly defined by the construction procedure:
+
+\begin{enumerate}
+ 	
+ 	\item The leaves (hashes of the log file entries) are added from left-to-right.
+ 	
+ 	\item Moving from left-to-right the leaves will be gathered into a forest of complete trees.
+ 	
+ 	\item All of the complete trees will be as large as possible with the currently available leaves. Due to the above mentioned process it is clear that larger trees will be on the left and smaller on the right.
+
+ 	\item When parsing a file (or any other input entity) is complete and no more leaves (entries) are added to the tree, the resulting forest of complete trees can be merged into a single \emph{canonical} tree. This merger is done by merging the root nodes of trees in the forest from right-to-left. Thus first the two smallest trees are merged to form a larger tree, which is then in turn merged with the third smallest tree. This procedure is repeated until all of the trees have been merge into one.
+
+\end{enumerate} 
+
+
+% section algorithm_description (end)
+
+
+
+
+
+\clearpage
+
+\bibliography{Guardtime.bib}
+
+\end{document}

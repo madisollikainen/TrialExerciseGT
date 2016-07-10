@@ -118,19 +118,6 @@ int main( int argc, char **argv )
 		HASH_CHAIN=true;
 		char * tmp = getCmdOption(argv, argv + argc, "--chain"); 
 		hash_chain_lines_file = std::string(tmp);
-
-		// // If hash chain is requested, search for the line
-		// if(cmdOptionExists(argv, argv+argc, "-l") )
-		// {
-		// 	char * tmp = getCmdOption(argv, argv + argc, "-l"); 
-		// 	hash_chain_lines_file = std::string(tmp);
-		// 	hash_chain_file = log_file + ".hash_chain";
-		// }
-		// else
-		// {
-		// 	std::cout << "\nMissing log file line for which to extract hash chain!" << std::endl;
-		// 	std::cout << "For more details see: -h or --help" << std::endl; 
-		// }
 	}
 	// By default only sign
 	if( !SIGN && !HASH_CHAIN )
@@ -227,29 +214,6 @@ int main( int argc, char **argv )
 						// Now set LEAVES to false (no need to print it again)
 						LEAVES=false;
 					}
-
-					// // If --sign was also active, get the Merkle tree root
-					// // from the hash chain and sign it. (do it only once)
-					// if(SIGN)
-					// {
-					// 	// Information massage 
-					// 	std::cout << "Signing the Merkle root ... "; 
-
-					// 	std::ofstream signature_out(log_signature_file);
-					// 	if(signature_out.is_open())
-					// 	{
-					// 		// The last entry in the hash_chain_out corresponds to the root 
-					// 		signature_out << signature( hash_chain_out.back().second ) << std::endl;
-					// 	}
-					// 	signature_out.close();
-
-					// 	// Information massage 
-					// 	std::cout << "completed" << std::endl;
-
-					// 	// Now set SIGN to false (no need to print it again)
-					// 	SIGN=false;
-
-					// } // END SIGN
 				}
 			} 
 		}
@@ -300,9 +264,6 @@ int main( int argc, char **argv )
 		}
 
 	} // END SIGN
-
-
-
 
 } // END MAIN
 

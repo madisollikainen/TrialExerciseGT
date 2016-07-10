@@ -36,7 +36,7 @@ std::string sha256(const std::string str)
 } 
 
 
-// --- My Hash mergin function --> just add/concatinate the strings --- //
+// --- My Hash mergin function just add/concatinate the strings --- //
 std::string myHashMerge(const std::string s1, const std::string s2 )
 {
     return (s1+s2);
