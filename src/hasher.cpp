@@ -228,36 +228,34 @@ int main( int argc, char **argv )
 						LEAVES=false;
 					}
 
+					// // If --sign was also active, get the Merkle tree root
+					// // from the hash chain and sign it. (do it only once)
+					// if(SIGN)
+					// {
+					// 	// Information massage 
+					// 	std::cout << "Signing the Merkle root ... "; 
 
+					// 	std::ofstream signature_out(log_signature_file);
+					// 	if(signature_out.is_open())
+					// 	{
+					// 		// The last entry in the hash_chain_out corresponds to the root 
+					// 		signature_out << signature( hash_chain_out.back().second ) << std::endl;
+					// 	}
+					// 	signature_out.close();
 
-					// If --sign was also active, get the Merkle tree root
-					// from the hash chain and sign it. (do it only once)
-					if(SIGN)
-					{
-						// Information massage 
-						std::cout << "Signing the Merkle root ... "; 
+					// 	// Information massage 
+					// 	std::cout << "completed" << std::endl;
 
-						std::ofstream signature_out(log_signature_file);
-						if(signature_out.is_open())
-						{
-							// The last entry in the hash_chain_out corresponds to the root 
-							signature_out << signature( hash_chain_out.back().second ) << std::endl;
-						}
-						signature_out.close();
+					// 	// Now set SIGN to false (no need to print it again)
+					// 	SIGN=false;
 
-						// Information massage 
-						std::cout << "completed" << std::endl;
-
-						// Now set SIGN to false (no need to print it again)
-						SIGN=false;
-
-					} // END SIGN
+					// } // END SIGN
 				}
 			} 
 		}
 		lines.close();
 	} // END HASH_CHAIN
-	else if(SIGN)
+	if(SIGN)
 	{
 		// Information massage 
 		std::cout << "Calculating the Merkle root ... "; 
