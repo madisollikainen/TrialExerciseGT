@@ -1,71 +1,28 @@
-/*	Author: Madis Ollikainen
+/**
+ *	Author: Madis Ollikainen
  *	File:	merkleHasher.hpp
  *
- *	Header file for the MerkleHasher class, which 
- *	implements methods for reading an text file and 
- *	generating a hash tree (Merkle tree) out of the 
- *	hashes of the lines in the file. 
+ *	Implements class template MerkleHasher, which 
+ *	hold methods for:
+ *		a) 	Calcuating the root of Merkle hash trees 
+ *			whose leaves correspond to hashes of 
+ *			some text file lines.  
+ *		b)	Extracting leaf-to-root hash chains 
+ *			from a Merkle tree whose leaves 
+ *			correspond to hashes of some text  
+ *			file lines. 
  *
- *	The class will be templated on:
- *		a) The hash function 
- *		b) The 'hash merging' function
+ *	MerkleHasher is templated on:
+ *		a) The hash function used 
+ *		b) The 'hash merging' function used
  *
- *	 
- *	The Merkle tree structure will be formed similarly 
- *	as suggested in [1]. Following [1] a 'canonical' 
- *	hash tree is formed, which can be grown without
- *	previously knowing the number of leaves it will 
- *	contain. 
- *
- *	The 'canonical' hash tree is a binary hash tree, which 
- *	can be constructed as follows:
- *		
- *		1)	The leaves (hashes of the log file entries) are
- *			added from left-to-right. 
- *		
- *		2)	Moving from left-to-right the leaves will be gathered
- *			into a forest of complete trees. 
- *		
- *		3)	All of the complete trees will be as large as possible
- *			with the currently available leaves. Due to the above 
- *			mentioned process it is clear that larger trees will be
- *			on the left and smaller on the right.
- *
- *		4)	When parsing of a file (or any other input entity) is 
- *			complete and no more leaves (entries) are added to the 
- *			tree, the resulting forest of complete trees can be 
- *			merged into a single 'canonical' tree. This merger is
- *			done by merging the root nodes of trees in the forest
- *			from right-to-left. Thus first the two smallest trees 
- *			are merged to form a larger tree, which is then in turn 
- *			merged with the third smallest tree. This procedure is
- *			repeated until all of the trees have been merge into one.
- *			
- *
- *	For singing/time-stamping a file, the root of the 'canonical' Merkle tree formed
- *	from the file can be signed. And for verifying the existance of a single line 
- *	in the file, the hash chain stsrting from the hash of that line to the root of the 
- *	tree can be used. Thus the MerkleHasher class will implement the following functions:
- *		
- *		a)	'getRoot', which takes a file and outputes the root of its Merkle Tree.
- *	 		Additionally this function will store the leaf values into a inpputed vector.
- *
- *		b)	'getHashChain', which takes a file and a string corresponding to a line in the 
- *			file. It will go trough a similar process as function 'getRoot', but in addition
- *			it will keep track of the nodes which should be present in the hash chain and 
- *			outputs the hash chain as an vector of pairs. The pairs will consist of an integer
- *			and a string. The integer will refer to the order in which the corresponding hash
- *			is submitted to the hash merging function to generate a new node. And the string
- *			will hold the hash itself. The hash chain will always have either zero or a odd
- *			number of entries. If the presented line is not present in the file, the hash chain
- *			will be zero. Otherwise, the odd entries correspond to the 'main chain' and the 
- *			even entries correspond to the 'side chains'.  
- *	 
- *
- * 	Ref: 
+ *	The algorithms used in the class are based on [1].
+ *	For further details refer to the documentation in ../doc/doc.
+ *	
+ *	Ref: 
  *		[1] Ahto Buldas, Ahto Truu, Risto Laanoja, Rainer Gerhards:
  *			Efficient Record-Level Keyless Signatures for Audit Logs. NordSec 2014: 149-164
- *	 
+ *
  */
 
 #ifndef MERKLE_HASHER_HPP
@@ -78,38 +35,32 @@
 #include <utility>
 #include <fstream>
 
+#include "myHashInterface.hpp"
 
-// Typedef the hash_chain_t type as a vector of pairs of int and string
-typedef std::vector< std::pair<int, std::string> > hash_chain_t;
-
-
-/*****************************************************
- *** The templated MerkleHasher class declaration. ***
- *****************************************************/
+// ------------------------------------ //
+// ----- MerkleHasher DECLARATION ----- //
+// ------------------------------------ // 
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
 class MerkleHasher
-// struct MerkleHasher
 {
 
 public:
 
-	// Wrappers for hashing: either for one or two inputs
+	// --- Wrappers for hashing one or two inputs --- //
 	std::string hash(const std::string s){	return H(s);	}
 	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
-
-	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
-	std::string getRoot( const std::string file, bool saveLeaves);
-
-
-	// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
-	hash_chain_t getHashChain( const std::string file, std::string target_line, bool saveLeaves); 
-
-	// --- selfConsistentHashChain --> a method for verifying if the hash chain is self-consistent
-	bool selfConsistentHashChain(hash_chain_t& chain);
 
 	// --- Getter for the leaves vector --- //
 	std::vector<std::string> getLeaves() { return leaves; }
 
+	// --- Method for getting the root and leafs of a Merkle tree --- //
+	std::string getRoot( const std::string& file, bool saveLeaves);
+
+	// --- Method for extracting hash chains from a Merkle tree --- //
+	hash_chain_t getHashChain( const std::string& file, std::string target_line, bool saveLeaves); 
+
+	// --- Method for verifying if a hash chain is self-consistent --- //
+	bool selfConsistentHashChain(hash_chain_t& chain);
 	
 
 private:
@@ -119,12 +70,12 @@ private:
 
 
 
-/*****************************************************
- *** The MerkleHasher member function definitions. ***
- *****************************************************/
+// --------------------------------------- //
+// ----- MerkleHasher IMPLEMENTATION ----- //
+// --------------------------------------- // 
 
 
-// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
+// --- Method for getting the root and leafs of a Merkle tree --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
 std::string MerkleHasher<H,M>::getRoot( const std::string file, bool saveLeaves)
 {
@@ -134,76 +85,65 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, bool saveLeaves)
 	// Initialise the output
 	std::string root;
 
-	// Open the file 
-	std::ifstream input_file(file);
-
 	// Make a vector to hold the roots of the 
 	// forest consisting of complete trees.
 	std::vector<std::string> roots_;
 
-	// Loop over the lines in the file and 		
-	// generate the complete-tree-forest
-	// Traverse the roots_ vector and update it.
-	// The traversal is done with simple rules:
-	// 
-	// 		a)	If the roots_[i] is an empty string,
-	// 			set it to be the current 'leaf' value
-	// 			roots_[i] = leaf. Finish the loop.
-	//
-	// 		b)	If roots_[i] is a non-empty string,
-	// 		 	then hash it together with the leaf
-	// 			leaf = hash(roots_[i],leaf) and set 
-	// 			change it to empty string roots_[i]="". 
-	// 			After that carry on with the loop.
-	//		
-	//		c)	If the end of the vector roots_ is reach
-	//			without finding an empty roots_[i], then 
-	//			push the hashed together leaf to the end 
-	//			end of the roots_ vector.
-	//
+	// Open the file 
+	std::ifstream input_file(file);
 	if(input_file.is_open())
 	{
-
+		// Loop over the lines in the file and 
 		std::string line; 
 		while( std::getline(input_file, line) )
 		{
-			// Get the hash of the line and store the leaf
+			// Get the hash of the line and 
+			// store the leaf if asked
 			std::string leaf = hash(line);
 			if(saveLeaves) { leaves.push_back(leaf); }	
 
 			// Loop over the complete-tree-forest roots
 			for (uint i=0; i<roots_.size(); ++i)
 			{
+				// Push the agglomerated value into the
+				// first slot where there is an empty string.
+				// And set the leaf variable to be "" for later
+				// checking
 				if( roots_[i] == "" )
 				{
-					// roots_[i] = leaf;
 					std::swap(roots_[i],leaf);
 					break;
 				}
+				// Until an empty string is found, hash 
+				// the roots toghether (merge trees) and 
+				// set the roots of the merged trees to be
+				// empty string
 				else
 				{
 					leaf = hash(roots_[i],leaf);
 					roots_[i] = "";
 				}
 			}
+			// If there were no empty strings on in the 
+			// roots_ vector, then push the agglomerated 
+			// value to the end of the vector
 			if(leaf != "" )
 			{
 				roots_.push_back(leaf);
 				leaf = "";
 			}
-		} // end while
+		} 
 	}
 	input_file.close();
 
-	// Now merge the complete-tree-forest from 
+	// Merge the complete-tree-forest from 
 	// right-to-left. Start by finding the first
-	// non-empty string in the roots_ vector.
+	// non-empty string in the roots_ vector
+	// and setting it as the initial value for root
 	std::vector<std::string>::iterator it = std::find_if(roots_.begin(), roots_.end(), [](std::string s){ return s != ""; } );
-
-	// This will be initial value for the root
 	root = *it;
 
-	// Move the iterator
+	// Move the iterator by one
 	++it;
 
 	// Tansvers the roots_ vector and hash r with all non-empty strings
@@ -214,15 +154,12 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, bool saveLeaves)
 			root = hash(*it,root);
 		}
 	}
-
 	// Return the root
 	return root;
+} // END getRoot
 
 
-} 
-
-
-// --- getMerkleRoot --> a unified method for getting the root and leafs of a MerkleTree --- //
+// --- Method for extracting hash chains from a Merkle tree --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
 hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::string target_line, bool saveLeaves)
 {
@@ -235,36 +172,18 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 	// Initialise the root
 	std::string root;
 
+	// Make a vector to hold the roots of the 
+	// forest consisting of complete trees.
+	std::vector<std::string> roots_;
+
 	// Initialise the target
 	std::string target = hash(target_line);
 
 	// Open the file 
 	std::ifstream input_file(file);
 
-	// Make a vector to hold the roots of the 
-	// forest consisting of complete trees.
-	std::vector<std::string> roots_;
 
-	// Loop over the lines in the file and 
-	// generate the complete-tree-forest
-	// Traverse the roots_ vector and update it.
-	// The traversal is done with simple rules:
-	//
-	//		a)	If the roots_[i] is an empty string,
-	//			set it to be the current 'leaf' value
-	//			roots_[i] = leaf. Finish the loop.
-	//
-	// 		b)	If roots_[i] is a non-empty string,
-	//		 	then hash it together with the leaf
-	//			leaf = hash(roots_[i],leaf) and set 
-	//			change it to empty string roots_[i]="". 
-	//			After that carry on with the loop.
-	//		
-	//		c)	If the end of the vector roots_ is reach
-	//			without finding an empty roots_[i], then 
-	//			push the hashed together leaf to the end 
-	//			end of the roots_ vector.
-	//
+
 	// During the traversal, the hash chain will also
 	// be gatherd. That is done in the following way:
 	//
@@ -292,19 +211,27 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 		std::string line; 
 		while( std::getline(input_file, line) )
 		{
-			// Get the hash of the line (a new leaf)
+			// Get the hash of the line and 
+			// store the leaf if asked
 			std::string leaf = hash(line);
 			if(saveLeaves) { leaves.push_back(leaf); }
 			
 			// Loop over the complete-tree-forest roots
 			for (uint i=0; i<roots_.size(); ++i)
-			{
+			{				
+				// Push the agglomerated value into the
+				// first slot where there is an empty string.
+				// And set the leaf variable to be "" for later
+				// checking
 				if( roots_[i] == "" )
 				{
-					// roots_[i] = leaf;
 					std::swap(roots_[i],leaf);
 					break;
 				}
+				// Until an empty string is found, hash 
+				// the roots toghether (merge trees) and 
+				// set the roots of the merged trees to be
+				// empty string
 				else
 				{	// Before conducting the hashing,
 					// check if any of the two values
@@ -335,25 +262,27 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 					}
 				}
 			}
+			// If there were no empty strings on in the 
+			// roots_ vector, then push the agglomerated 
+			// value to the end of the vector
 			if(leaf != "" )
 			{
 				roots_.push_back(leaf);
 				leaf = "";
 			}
-		} // end while
+		}
 	}
 	input_file.close();
 	
 
-	// Now merge the complete-tree-forest from 
+	// Merge the complete-tree-forest from 
 	// right-to-left. Start by finding the first
-	// non-empty string in the roots_ vector.
+	// non-empty string in the roots_ vector
+	// and setting it as the initial value for root
 	std::vector<std::string>::iterator it = std::find_if(roots_.begin(), roots_.end(), [](std::string s){ return s != ""; } );
-
-	// This will be initial value for the root
 	root = *it;
 
-	// Move the iterator
+	// Move the iterator by one
 	++it;
 
 	// Tansvers the roots_ vector and hash r with all non-empty strings
@@ -385,7 +314,6 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 			
 		}
 	}
-
 	// Now check if the target == root. If it does,
 	// add it to the chain. If not, then the initial 
 	// target was not amongs the leafs.
@@ -396,12 +324,10 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 	
 	// Return the hash chain
 	return chain;
-} 
+} // END getHashChain
 
 
-
-
-// --- selfConsistentHashChain --> a method for verifying if the hash chain is self-consistent
+// --- Method for verifying if a hash chain is self-consistent --- //
 template <std::string (*H)(const std::string), std::string (*M)(const std::string, const std::string )>
 bool MerkleHasher<H,M>::selfConsistentHashChain(hash_chain_t& chain)
 {
@@ -415,6 +341,9 @@ bool MerkleHasher<H,M>::selfConsistentHashChain(hash_chain_t& chain)
 	{
 		return false;
 	}
+	// Transvers the chain and conduct the hashing calcualtions. 
+	// Check each of the results against the entries in the chain.
+	// If any discrepancy is found, return false.
 	else
 	{
 		for(uint i=0; i < chain.size() - 2; i=i+2  )
@@ -439,14 +368,10 @@ bool MerkleHasher<H,M>::selfConsistentHashChain(hash_chain_t& chain)
 			}
 		}
 	}
-
 	// If the control mechanism have not yet returned with false, then 
 	// the chain is self consistent. 
 	return true;
-}
-
-
-
+} // END selfConsistentHashChain
 
 
 #endif // MERKLE_HASHER_HPP

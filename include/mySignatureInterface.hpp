@@ -1,3 +1,10 @@
+/**
+ *	Author:	Madis Ollikainen 
+ *	File:	mySignatureInterface.hpp  
+ *
+ *	Implenets an empty signature fucntion.
+ */
+
 #ifndef MY_SIGNATURE_INTERFACE_HPP
 #define MY_SIGNATURE_INTERFACE_HPP
 
