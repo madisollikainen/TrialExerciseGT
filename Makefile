@@ -6,7 +6,7 @@ GIT_VERSION = $(shell git describe --abbrev=6 --dirty --always --tags)
 # Main executable name, which will be used both in the 
 # makefile as well as in the main function file for generating
 # the usage massage.
-EXE=main
+EXE=hasher
 
 # Compiler #
 CC 		= g++
