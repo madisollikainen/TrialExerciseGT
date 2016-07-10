@@ -1,4 +1,4 @@
-/*	
+/**	
  *	Simple helper functions for parsing commandline arguments
  * 	with option flags.
  */

@@ -54,10 +54,10 @@ public:
 	std::vector<std::string> getLeaves() { return leaves; }
 
 	// --- Method for getting the root and leafs of a Merkle tree --- //
-	std::string getRoot( const std::string& file, bool saveLeaves);
+	std::string getRoot( const std::string file, bool saveLeaves);
 
 	// --- Method for extracting hash chains from a Merkle tree --- //
-	hash_chain_t getHashChain( const std::string& file, std::string target_line, bool saveLeaves); 
+	hash_chain_t getHashChain( const std::string file, std::string target_line, bool saveLeaves); 
 
 	// --- Method for verifying if a hash chain is self-consistent --- //
 	bool selfConsistentHashChain(hash_chain_t& chain);
@@ -93,7 +93,7 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, bool saveLeaves)
 	std::ifstream input_file(file);
 	if(input_file.is_open())
 	{
-		// Loop over the lines in the file and 
+		// Loop over the lines in the file 
 		std::string line; 
 		while( std::getline(input_file, line) )
 		{
@@ -183,6 +183,7 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 	std::ifstream input_file(file);
 	if(input_file.is_open())
 	{
+		// Loop over the lines in the file 
 		std::string line; 
 		while( std::getline(input_file, line) )
 		{
@@ -221,16 +222,18 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 					}
 					else if( roots_[i] == target )
 					{
-						chain.push_back( std::make_pair(0,roots_[i]) ); // First push the one which 
-						chain.push_back( std::make_pair(1,leaf) );		// corresponds to the target.
+						// First push the one which corresponds to the target. 
+						chain.push_back( std::make_pair(0,roots_[i]) ); 
+						chain.push_back( std::make_pair(1,leaf) );		
 						leaf = hash(roots_[i],leaf);
 						roots_[i] = "";
 						target = leaf;
 					}
 					else
 					{
-						chain.push_back( std::make_pair(1,leaf) );		// First push the one which 
-						chain.push_back( std::make_pair(0,roots_[i]) ); // corresponds to the target.
+						// First push the one which corresponds to the target. 
+						chain.push_back( std::make_pair(1,leaf) );		 
+						chain.push_back( std::make_pair(0,roots_[i]) ); 
 						leaf = hash(roots_[i],leaf);
 						roots_[i] = "";
 						target = leaf;
@@ -274,15 +277,17 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 			}
 			else if (*it == target)
 			{
-				chain.push_back( std::make_pair(0,*it) ); 	// First push the one which 
-				chain.push_back( std::make_pair(1,root) );	// corresponds to the target.
+				// First push the one which corresponds to the target. 
+				chain.push_back( std::make_pair(0,*it) ); 
+				chain.push_back( std::make_pair(1,root) );
 				root = hash(*it,root);
 				target = root;
 			}
 			else
 			{
-				chain.push_back( std::make_pair(1,root) ); 	// First push the one which 
-				chain.push_back( std::make_pair(0,*it) );	// corresponds to the target.
+				// First push the one which corresponds to the target. 
+				chain.push_back( std::make_pair(1,root) ); 
+				chain.push_back( std::make_pair(0,*it) );
 				root = hash(*it,root);
 				target = root;
 			}

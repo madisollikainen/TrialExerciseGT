@@ -3,9 +3,10 @@
  *	File:	myHashInterface.hpp  
  *
  *	Implemets a very simple wrapper function for OpenSSL 
- *	SHA256 hashing function usage with std::strings.
+ *	SHA256 hashing function usage with std::strings. Alse 
+ *  holds the hash_chain_t type defination and the 
+ *  identidy_hash function, which just return the input. 
  *	
- * 	
  */
 
 #ifndef MY_HASH_INTERFACE_HPP
@@ -19,7 +20,8 @@
 // Hash functionality from OpenSSL
 #include <openssl/sha.h>
 
-// Typedef the hash_chain_t type as a vector of pairs of int and string
+
+// --- Typedef the hash_chain_t type --- //
 typedef std::vector< std::pair<int, std::string> > hash_chain_t;
 
 // --- The SHA256 hashing function wrapper --- //
@@ -38,14 +40,17 @@ std::string sha256(const std::string str)
     return ss.str();
 } 
 
-
 // --- My Hash mergin function just adds/concatinates the strings --- //
 std::string myHashMerge(const std::string s1, const std::string s2 )
 {
     return (s1+s2);
 }
 
-
+// --- The identity_hash just returns the intput --- //
+std::string identity_hash(const std::string str)
+{
+    return str;
+} 
 
 
 #endif // MY_HASH_INTERFACE_HPP

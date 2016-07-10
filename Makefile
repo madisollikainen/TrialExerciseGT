@@ -7,10 +7,11 @@ GIT_VERSION = $(shell git describe --abbrev=6 --dirty --always --tags)
 # makefile as well as in the main function file for generating
 # the usage massage.
 EXE=hasher
+TEST_EXE=test_hasher
 
 # Compiler #
 CC 		= g++
-CFLAGS	= -std=c++11 -Wall -DVERSION=\"$(GIT_VERSION)\" -DEXE_NAME=\"$(EXE)\" 
+CFLAGS	= -std=c++11 -Wall -DVERSION=\"$(GIT_VERSION)\" 
 OPT 	= 
 # OPT 	= -O2 -g
 
@@ -26,18 +27,16 @@ BUILD   = build
 OpenSSL = -lssl -lcrypto
 
 
+all: ${EXE} ${TEST_EXE} 
 
-all: ${EXE}  
-
-# test: ${SRC}/test.cpp ${HEADERS}/*.hpp ${BUILD}
-# 	${CC} ${CFLAGS} ${OPT} -o ${BUILD}/test ${SRC}/test.cpp ${OpenSSL} -I${HEADERS}
+${TEST_EXE}: ${SRC}/${TEST_EXE}.cpp ${HEADERS}/*.hpp ${BUILD}
+	${CC} ${CFLAGS} -DEXE_NAME=\"$(TEST_EXE)\" ${OPT} -o ${BUILD}/${TEST_EXE} ${SRC}/${TEST_EXE}.cpp ${OpenSSL} -I${HEADERS}
 
 ${EXE}: ${SRC}/${EXE}.cpp ${HEADERS}/*.hpp ${BUILD}
-	${CC} ${CFLAGS} ${OPT} -o ${BUILD}/${EXE} ${SRC}/${EXE}.cpp ${OpenSSL} -I${HEADERS}
+	${CC} ${CFLAGS} -DEXE_NAME=\"$(EXE)\" ${OPT} -o ${BUILD}/${EXE} ${SRC}/${EXE}.cpp ${OpenSSL} -I${HEADERS}
 
 ${BUILD}:
 	mkdir -p ${BUILD}
-
 
 clean:
 	rm ${BUILD}/*
