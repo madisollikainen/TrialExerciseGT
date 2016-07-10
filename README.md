@@ -9,7 +9,7 @@ OpenSSL = -lssl -lcrypto
 
 to 
 
-OpenSSL = -lssl -lcrypto -L<path\_to\_OpenSSL>
+OpenSSL = -lssl -lcrypto -L[path\_to\_OpenSSL]
 
 For compilation just call 
 
@@ -23,8 +23,8 @@ At the moment the code has only been tested on Linux. It should work without iss
 
 For both of executables build/hasher and build/test_hasher the only compulsory argument is the log file name, which can be passed as 
 
--i <log\_file\_name> 
+-i [log\_file\_name] 
 
-The executables produce help messages in the expected way (-h or --help). If they are called with just the log file argument, then only root signing is conducted. For hash chain extraction add --chain <file_with_requested_lines> and for storing the leaves --leaves.  
+The executables produce help messages in the expected way (-h or --help). If they are called with just the log file argument, then only root signing is conducted. For hash chain extraction add --chain [file_with_requested_lines] and for storing the leaves --leaves.  
 
-For ease of testing the code output, script run\_test.sh has been added. It calls the test_hasher with numbers.log, storing the signature, leaves and the hash chains for all the lines. 
+For ease of testing the code output, script run_test.sh has been added. It calls the test_hasher with numbers.log, storing the signature, leaves and the hash chains for all the lines. 
