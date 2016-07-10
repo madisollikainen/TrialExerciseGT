@@ -181,31 +181,6 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 
 	// Open the file 
 	std::ifstream input_file(file);
-
-
-
-	// During the traversal, the hash chain will also
-	// be gatherd. That is done in the following way:
-	//
-	//		1) 	We always keep track of the next value, 
-	//			which should be added to the hash chain.
-	//			This value is stored in the variable 'target'
-	//			and its initial value is the hash of the  
-	//			target_line.
-	//
-	//		2)	Every time when two hashes are 'merged' and 
-	//			re-hashed to form a new node in the tree 
-	//			(during roots_ traversal) the code checks 
-	//			if one of these hashes matches the target value.
-	//			If it does, then both of the hashes are added
-	//			to the hash chain, such that the hash, which
-	//			matched the target value is added first.
-	//			After that we know that the new node resulting
-	//			from hashing the above two together has to be 
-	//			the next value, which we add to the chain. Thus
-	//			it will be set to be the next target value.
-	//
-	//
 	if(input_file.is_open())
 	{
 		std::string line; 
