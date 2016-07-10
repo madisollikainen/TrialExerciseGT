@@ -145,16 +145,16 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, bool saveLeaves)
 	// generate the complete-tree-forest
 	// Traverse the roots_ vector and update it.
 	// The traversal is done with simple rules:
-	//
-	//		a)	If the roots_[i] is an empty string,
-	//			set it to be the current 'leaf' value
-	//			roots_[i] = leaf. Finish the loop.
+	// 
+	// 		a)	If the roots_[i] is an empty string,
+	// 			set it to be the current 'leaf' value
+	// 			roots_[i] = leaf. Finish the loop.
 	//
 	// 		b)	If roots_[i] is a non-empty string,
-	//		 	then hash it together with the leaf
-	//			leaf = hash(roots_[i],leaf) and set 
-	//			change it to empty string roots_[i]="". 
-	//			After that carry on with the loop.
+	// 		 	then hash it together with the leaf
+	// 			leaf = hash(roots_[i],leaf) and set 
+	// 			change it to empty string roots_[i]="". 
+	// 			After that carry on with the loop.
 	//		
 	//		c)	If the end of the vector roots_ is reach
 	//			without finding an empty roots_[i], then 
