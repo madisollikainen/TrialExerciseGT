@@ -29,9 +29,6 @@ OpenSSL = -lssl -lcrypto
 
 all: ${EXE} ${TEST_EXE} 
 
-# ${TEST_EXE}: ${SRC}/${TEST_EXE}.cpp ${HEADERS}/*.hpp ${BUILD}
-# 	${CC} ${CFLAGS} -DEXE_NAME=\"$(TEST_EXE)\" ${OPT} -o ${BUILD}/${TEST_EXE} ${SRC}/${TEST_EXE}.cpp ${OpenSSL} -I${HEADERS}
-
 ${TEST_EXE}: ${SRC}/${EXE}.cpp ${HEADERS}/*.hpp ${BUILD}
 	${CC} ${CFLAGS} -DTEST -DEXE_NAME=\"$(TEST_EXE)\" ${OPT} -o ${BUILD}/${TEST_EXE} ${SRC}/${EXE}.cpp ${OpenSSL} -I${HEADERS}
 

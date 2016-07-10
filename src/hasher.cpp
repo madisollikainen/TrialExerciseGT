@@ -82,7 +82,11 @@ int main( int argc, char **argv )
 	// --- Combining the VERSION/NAME message and the USAGE_MESSAGE --- //
 	// The VERSION and EXE_NAME are variables defined during compilation
 	// for their details see the Makefile. 
-	std::string NAME_HEAD = "Guardtime trial excersise by Madis Ollikainen.\nVersion: " + std::string(VERSION);
+	#ifdef TEST
+		std::string NAME_HEAD = "Guardtime trial excersise by Madis Ollikainen. Test version with identity hash function.\nCode version (git): " + std::string(VERSION);
+	#else
+		std::string NAME_HEAD = "Guardtime trial excersise by Madis Ollikainen. Production version with SHA256 hash function.\nCode version (git): " + std::string(VERSION);
+	#endif
 	std::string USAGE_MESSAGE = "Usage: \n\t./" + std::string(EXE_NAME) + " -i <log_file path> (--leaves)\n\t./"
 												+ std::string(EXE_NAME) + " -i <log_file path> --chain <lines_file> (--leaves)\n\t./"
 												+ std::string(EXE_NAME) + " -i <log_file path> --chain <lines_file> --sign (--leaves)";

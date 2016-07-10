@@ -60,6 +60,7 @@ public:
 	hash_chain_t getHashChain( const std::string file, std::string target_line, bool saveLeaves); 
 
 	// --- Method for verifying if a hash chain is self-consistent --- //
+	// Currently not used
 	bool selfConsistentHashChain(hash_chain_t& chain);
 	
 
