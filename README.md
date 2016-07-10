@@ -1,5 +1,5 @@
 # TrialExerciseGT
-This repository is for my trial excersise for Guardtime research engineer position.
+This repository is for my trial exercise for Guardtime research engineer position.
 
 ## Compilation
 
@@ -9,7 +9,7 @@ OpenSSL = -lssl -lcrypto
 
 to 
 
-OpenSSL = -lssl -lcrypto -L[path\_to\_OpenSSL]
+OpenSSL = -lssl -lcrypto -L[path_to_OpenSSL]
 
 For compilation just call 
 
