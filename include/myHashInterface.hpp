@@ -10,7 +10,6 @@
 #ifndef MY_HASH_INTERFACE_HPP
 #define MY_HASH_INTERFACE_HPP
 
-// STD includes
 #include <iostream>
 #include <sstream>
 #include <string>

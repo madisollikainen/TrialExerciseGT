@@ -93,7 +93,7 @@ struct MerkleHasher
 
 // public:
 
-	// Wrappers for hashing: either a single or two values
+	// Wrappers for hashing: either for one or two inputs
 	std::string hash(const std::string s){	return H(s);	}
 	std::string hash(const std::string s1, const std::string s2){	return H( M(s1,s2) );	}
 
@@ -105,6 +105,8 @@ struct MerkleHasher
 
 	// --- selfConsistentHashChain --> a method for verifying if the hash chain is self-consistent
 	bool selfConsistentHashChain(hash_chain_t& chain);
+
+	
 
 // private:
 
@@ -132,7 +134,7 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, std::vector<std:
 	// forest consisting of complete trees.
 	std::vector<std::string> roots_;
 
-	// Loop over the lines in the file and 
+	// Loop over the lines in the file and 		
 	// generate the complete-tree-forest
 	// Traverse the roots_ vector and update it.
 	// The traversal is done with simple rules:
@@ -152,34 +154,39 @@ std::string MerkleHasher<H,M>::getRoot( const std::string file, std::vector<std:
 	//			push the hashed together leaf to the end 
 	//			end of the roots_ vector.
 	//
-	std::string line; 
-	while( std::getline(input_file, line) )
+	if(input_file.is_open())
 	{
-		// Get the hash of the line and store the leaf
-		std::string leaf = hash(line);
-		leafs.push_back(leaf);
 
-		// Loop over the complete-tree-forest roots
-		for (uint i=0; i<roots_.size(); ++i)
+		std::string line; 
+		while( std::getline(input_file, line) )
 		{
-			if( roots_[i] == "" )
+			// Get the hash of the line and store the leaf
+			std::string leaf = hash(line);
+			leafs.push_back(leaf);
+
+			// Loop over the complete-tree-forest roots
+			for (uint i=0; i<roots_.size(); ++i)
 			{
-				// roots_[i] = leaf;
-				std::swap(roots_[i],leaf);
-				break;
+				if( roots_[i] == "" )
+				{
+					// roots_[i] = leaf;
+					std::swap(roots_[i],leaf);
+					break;
+				}
+				else
+				{
+					leaf = hash(roots_[i],leaf);
+					roots_[i] = "";
+				}
 			}
-			else
+			if(leaf != "" )
 			{
-				leaf = hash(roots_[i],leaf);
-				roots_[i] = "";
+				roots_.push_back(leaf);
+				leaf = "";
 			}
-		}
-		if(leaf != "" )
-		{
-			roots_.push_back(leaf);
-			leaf = "";
-		}
-	} // end while
+		} // end while
+	}
+	input_file.close();
 
 	// Now merge the complete-tree-forest from 
 	// right-to-left. Start by finding the first
@@ -270,57 +277,62 @@ hash_chain_t MerkleHasher<H,M>::getHashChain( const std::string file, std::strin
 	//			it will be set to be the next target value.
 	//
 	//
-	std::string line; 
-	while( std::getline(input_file, line) )
+	if(input_file.is_open())
 	{
-		// Get the hash of the line (a new leaf)
-		std::string leaf = hash(line);
-		
-		// Loop over the complete-tree-forest roots
-		for (uint i=0; i<roots_.size(); ++i)
+		std::string line; 
+		while( std::getline(input_file, line) )
 		{
-			if( roots_[i] == "" )
+			// Get the hash of the line (a new leaf)
+			std::string leaf = hash(line);
+			
+			// Loop over the complete-tree-forest roots
+			for (uint i=0; i<roots_.size(); ++i)
 			{
-				// roots_[i] = leaf;
-				std::swap(roots_[i],leaf);
-				break;
-			}
-			else
-			{	// Before conducting the hashing,
-				// check if any of the two values
-				// entering the hash function, is
-				// equvalent to the target. If yes,
-				// then store them into the hash_chain
-				// in correct order.
-				if ( roots_[i] != target && leaf != target )
+				if( roots_[i] == "" )
 				{
-					leaf = hash(roots_[i],leaf);
-					roots_[i] = "";
-				}
-				else if( roots_[i] == target )
-				{
-					chain.push_back( std::make_pair(0,roots_[i]) ); // First push the one which 
-					chain.push_back( std::make_pair(1,leaf) );		// corresponds to the target.
-					leaf = hash(roots_[i],leaf);
-					roots_[i] = "";
-					target = leaf;
+					// roots_[i] = leaf;
+					std::swap(roots_[i],leaf);
+					break;
 				}
 				else
-				{
-					chain.push_back( std::make_pair(1,leaf) );		// First push the one which 
-					chain.push_back( std::make_pair(0,roots_[i]) ); // corresponds to the target.
-					leaf = hash(roots_[i],leaf);
-					roots_[i] = "";
-					target = leaf;
+				{	// Before conducting the hashing,
+					// check if any of the two values
+					// entering the hash function, is
+					// equvalent to the target. If yes,
+					// then store them into the hash_chain
+					// in correct order.
+					if ( roots_[i] != target && leaf != target )
+					{
+						leaf = hash(roots_[i],leaf);
+						roots_[i] = "";
+					}
+					else if( roots_[i] == target )
+					{
+						chain.push_back( std::make_pair(0,roots_[i]) ); // First push the one which 
+						chain.push_back( std::make_pair(1,leaf) );		// corresponds to the target.
+						leaf = hash(roots_[i],leaf);
+						roots_[i] = "";
+						target = leaf;
+					}
+					else
+					{
+						chain.push_back( std::make_pair(1,leaf) );		// First push the one which 
+						chain.push_back( std::make_pair(0,roots_[i]) ); // corresponds to the target.
+						leaf = hash(roots_[i],leaf);
+						roots_[i] = "";
+						target = leaf;
+					}
 				}
 			}
-		}
-		if(leaf != "" )
-		{
-			roots_.push_back(leaf);
-			leaf = "";
-		}
-	} // end while
+			if(leaf != "" )
+			{
+				roots_.push_back(leaf);
+				leaf = "";
+			}
+		} // end while
+	}
+	input_file.close();
+	
 
 	// Now merge the complete-tree-forest from 
 	// right-to-left. Start by finding the first
